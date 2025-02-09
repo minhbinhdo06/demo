@@ -2,4 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
-print("Hello World")
+for x in range(100):
+    print(x, end =" ")
+        
