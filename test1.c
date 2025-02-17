@@ -1,9 +1,12 @@
 #include<stdio.h>
-#include<stdlib.h>
+
+int a;
 
 int main()
 {
-    printf("Hello, World!\n");
+
+    scanf("%d", &a);
+    printf("%d", 2*a);
+
     return 0;
 }
-    

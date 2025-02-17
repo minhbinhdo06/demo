@@ -1,95 +1,103 @@
 #include <iostream>
 #include <vector>
-#include <queue>
-#include <unordered_set>
-
+#include <climits>
+#include <algorithm>
 using namespace std;
 
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
+vector<int> nearestNeighbor(int n, const vector<vector<int>> &c)
+{
+    vector<int> path;
+    vector<bool> visited(n + 1, false);
+    int current = 1;
+    path.push_back(current);
+    visited[current] = true;
 
-    int N, M;
-    cin >> N >> M;
-
-    vector<vector<int>> grid(N, vector<int>(M));
-    for (int i = 0; i < N; ++i) {       
-        for (int j = 0; j < M; ++j) {
-            cin >> grid[i][j];
+    for (int i = 1; i < n; ++i)
+    {
+        int next = -1;
+        int min_dist = INT_MAX;
+        for (int j = 1; j <= n; ++j)
+        {
+            if (!visited[j] && c[current][j] < min_dist)
+            {
+                min_dist = c[current][j];
+                next = j;
+            }
+            else if (!visited[j] && c[current][j] == min_dist && j < next)
+            {
+                next = j;
+            }
         }
+        path.push_back(next);
+        visited[next] = true;
+        current = next;
     }
+    return path;
+}
 
-    vector<vector<bool>> visited(N, vector<bool>(M, false));
-    int peak_count = 0;
+int calculateCost(const vector<int> &path, const vector<vector<int>> &c)
+{
+    int cost = 0;
+    for (size_t i = 0; i < path.size(); ++i)
+    {
+        int j = (i + 1) % path.size();
+        cost += c[path[i]][path[j]];
+    }
+    return cost;
+}
 
-    for (int i = 0; i < N; ++i) {
-        for (int j = 0; j < M; ++j) {
-            if (visited[i][j]) continue;
-
-            queue<pair<int, int>> q;
-            q.push({i, j});
-            visited[i][j] = true;
-            vector<pair<int, int>> cells;
-            cells.push_back({i, j});
-            unordered_set<int> current_region;
-            current_region.insert(i * M + j);
-            int H = grid[i][j];
-
-            // BFS to find all cells in the current region
-            while (!q.empty()) {
-                auto [x, y] = q.front();
-                q.pop();
-
-                for (int dx = -1; dx <= 1; ++dx) {
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        if (dx == 0 && dy == 0) continue;
-
-                        int nx = x + dx;
-                        int ny = y + dy;
-
-                        if (nx >= 0 && nx < N && ny >= 0 && ny < M) {
-                            if (!visited[nx][ny] && grid[nx][ny] == H) {
-                                visited[nx][ny] = true;
-                                q.push({nx, ny});
-                                cells.push_back({nx, ny});
-                                current_region.insert(nx * M + ny);
-                            }
-                        }
-                    }
+vector<int> twoOpt(int n, const vector<int> &path, const vector<vector<int>> &c)
+{
+    vector<int> newPath = path;
+    bool improvement = true;
+    while (improvement)
+    {
+        improvement = false;
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = i + 2; j < n; ++j)
+            {
+                int a = newPath[i];
+                int b = newPath[(i + 1) % n];
+                int c_node = newPath[j];
+                int d = newPath[(j + 1) % n];
+                int current = c[a][b] + c[c_node][d];
+                int potential = c[a][c_node] + c[b][d];
+                if (potential < current)
+                {
+                    reverse(newPath.begin() + i + 1, newPath.begin() + j + 1);
+                    improvement = true;
                 }
-            }
-
-            // Check if the region is a peak
-            bool valid = true;
-            for (auto [x, y] : cells) {
-                for (int dx = -1; dx <= 1; ++dx) {
-                    for (int dy = -1; dy <= 1; ++dy) {
-                        if (dx == 0 && dy == 0) continue;
-
-                        int nx = x + dx;
-                        int ny = y + dy;
-
-                        if (nx < 0 || nx >= N || ny < 0 || ny >= M) continue;
-
-                        int key = nx * M + ny;
-                        if (current_region.count(key)) continue;
-
-                        if (grid[nx][ny] >= H) {
-                            valid = false;
-                            goto end_check;
-                        }
-                    }
-                }
-            }
-
-            end_check:
-            if (valid) {
-                peak_count++;
             }
         }
     }
+    return newPath;
+}
 
-    cout << peak_count << endl;
+int main()
+{
+    int n;
+    cin >> n;
+    vector<vector<int>> c(n + 1, vector<int>(n + 1));
+    for (int i = 1; i <= n; ++i)
+    {
+        for (int j = 1; j <= n; ++j)
+        {
+            cin >> c[i][j];
+        }
+    }
+
+    vector<int> path = nearestNeighbor(n, c);
+    path = twoOpt(n, path, c);
+
+    cout << calculateCost(path,c) << endl;
+    for (int i = 0; i < n; ++i)
+    {
+        if (i > 0)
+            cout << " ";
+        cout << path[i];
+    }
+    cout << endl;
 
     return 0;
 }
